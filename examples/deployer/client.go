@@ -31,8 +31,6 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-
-	. "github.com/ease-lab/vhive/examples/endpoint"
 )
 
 // Functions is an object for unmarshalled JSON with functions to deploy.
@@ -47,7 +45,7 @@ type functionType struct {
 	// number of functions to deploy from the same file (with different names)
 	Count int `json:"count"`
 
-	Eventing bool `json:"eventing"`
+	Eventing    bool   `json:"eventing"`
 	ApplyScript string `json:"applyScript"`
 }
 

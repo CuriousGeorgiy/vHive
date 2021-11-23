@@ -25,13 +25,13 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/vhive-serverless/vhive/ctriface"
 	"os"
 	"strconv"
 	"sync"
 	"testing"
 
 	ctrdlog "github.com/containerd/containerd/log"
-	ctriface "github.com/ease-lab/vhive/ctriface"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -72,9 +72,13 @@ func TestMain(m *testing.M) {
 	log.Infof("Drop cache: %t", !*isWithCache)
 	log.Infof("Bench dir: %s", *benchDir)
 
+	// TODO: set correct params if full local test
 	orch = ctriface.NewOrchestrator(
 		"devmapper",
 		"",
+		"",
+		"",
+		10,
 		ctriface.WithTestModeOn(true),
 		ctriface.WithSnapshots(*isSnapshotsEnabledTest),
 		ctriface.WithUPF(*isUPFEnabledTest),
@@ -286,16 +290,16 @@ func TestAllFunctions(t *testing.T) {
 	}
 
 	images := []string{
-		"ghcr.io/ease-lab/helloworld:var_workload",
-		"ghcr.io/ease-lab/chameleon:var_workload",
-		"ghcr.io/ease-lab/pyaes:var_workload",
-		"ghcr.io/ease-lab/image_rotate:var_workload",
-		"ghcr.io/ease-lab/json_serdes:var_workload",
-		"ghcr.io/ease-lab/lr_serving:var_workload",
-		"ghcr.io/ease-lab/cnn_serving:var_workload",
-		"ghcr.io/ease-lab/rnn_serving:var_workload",
-		"ghcr.io/ease-lab/lr_training:var_workload",
-		"ghcr.io/ease-lab/springboot:var_workload",
+		"ghcr.io/vhive-serverless/helloworld:var_workload",
+		"ghcr.io/vhive-serverless/chameleon:var_workload",
+		"ghcr.io/vhive-serverless/pyaes:var_workload",
+		"ghcr.io/vhive-serverless/image_rotate:var_workload",
+		"ghcr.io/vhive-serverless/json_serdes:var_workload",
+		"ghcr.io/vhive-serverless/lr_serving:var_workload",
+		"ghcr.io/vhive-serverless/cnn_serving:var_workload",
+		"ghcr.io/vhive-serverless/rnn_serving:var_workload",
+		"ghcr.io/vhive-serverless/lr_training:var_workload",
+		"ghcr.io/vhive-serverless/springboot:var_workload",
 	}
 	var (
 		servedTh      uint64

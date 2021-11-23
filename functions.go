@@ -25,6 +25,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vhive-serverless/vhive/snapshotting"
 	"math/rand"
 	"net"
 	"os"
@@ -40,10 +41,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	hpb "github.com/ease-lab/vhive/examples/protobuf/helloworld"
-	"github.com/ease-lab/vhive/metrics"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	hpb "github.com/vhive-serverless/vhive/examples/protobuf/helloworld"
+	"github.com/vhive-serverless/vhive/metrics"
 )
 
 var isTestMode bool // set with a call to NewFuncPool
@@ -221,13 +222,13 @@ func NewFunction(fID, imageName string, Stats *Stats, servedTh uint64, isToPin b
 // function instances when necessary.
 //
 // Synchronization description:
-// 1. Function needs to start an instance (with a unique vmID) if there are none: goroutines are synchronized with do.Once
-// 2. Function (that is not pinned) can serve only up to servedTh requests (controlled by a WeightedSemaphore)
-//    a. The last goroutine needs to trigger the function's instance shutdown, then reset the semaphore,
-//       allowing new goroutines to serve their requests.
-//    b. The last goroutine is determined by the atomic counter: the goroutine with syncID==0 shuts down
-//       the instance.
-//    c. Instance shutdown is performed asynchronously because all instances have unique IDs.
+//  1. Function needs to start an instance (with a unique vmID) if there are none: goroutines are synchronized with do.Once
+//  2. Function (that is not pinned) can serve only up to servedTh requests (controlled by a WeightedSemaphore)
+//     a. The last goroutine needs to trigger the function's instance shutdown, then reset the semaphore,
+//     allowing new goroutines to serve their requests.
+//     b. The last goroutine is determined by the atomic counter: the goroutine with syncID==0 shuts down
+//     the instance.
+//     c. Instance shutdown is performed asynchronously because all instances have unique IDs.
 func (f *Function) Serve(ctx context.Context, fID, imageName, reqPayload string) (*hpb.FwdHelloResp, *metrics.Metric, error) {
 	var (
 		serveMetric *metrics.Metric = metrics.NewMetric()
@@ -356,7 +357,7 @@ func (f *Function) AddInstance() *metrics.Metric {
 	if f.isSnapshotReady {
 		metr = f.LoadInstance()
 	} else {
-		resp, _, err := orch.StartVM(ctx, f.getVMID(), f.imageName)
+		resp, _, err := orch.StartVM(ctx, f.getVMID(), f.imageName, 256, 1, false)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -450,7 +451,8 @@ func (f *Function) CreateInstanceSnapshot() {
 		log.Panic(err)
 	}
 
-	err = orch.CreateSnapshot(ctx, f.vmID)
+	snap := snapshotting.NewSnapshot(f.vmID, "/fccd/snapshots", f.imageName, 256, 1, false)
+	err = orch.CreateSnapshot(ctx, f.vmID, snap)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -470,7 +472,7 @@ func (f *Function) OffloadInstance() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	err := orch.Offload(ctx, f.vmID)
+	err := orch.OffloadVM(ctx, f.vmID)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -487,7 +489,8 @@ func (f *Function) LoadInstance() *metrics.Metric {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 
-	loadMetr, err := orch.LoadSnapshot(ctx, f.vmID)
+	snap := snapshotting.NewSnapshot(f.vmID, "/fccd/snapshots", f.imageName, 256, 1, false)
+	_, loadMetr, err := orch.LoadSnapshot(ctx, f.vmID, snap)
 	if err != nil {
 		log.Panic(err)
 	}

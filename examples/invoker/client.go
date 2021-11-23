@@ -42,10 +42,10 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/ease-lab/vhive/utils/benchmarking/eventing/vhivemetadata"
+	"github.com/vhive-serverless/vhive/utils/benchmarking/eventing/vhivemetadata"
 
-	"github.com/ease-lab/vhive/examples/endpoint"
-	tracing "github.com/ease-lab/vhive/utils/tracing/go"
+	"github.com/vhive-serverless/vhive/examples/endpoint"
+	tracing "github.com/vhive-serverless/vhive/utils/tracing/go"
 )
 
 const TimeseriesDBAddr = "10.96.0.84:90"
@@ -67,7 +67,7 @@ func main() {
 	portFlag = flag.Int("port", 80, "The port that functions listen to")
 	withTracing = flag.Bool("trace", false, "Enable tracing in the client")
 	zipkin := flag.String("zipkin", "http://localhost:9411/api/v2/spans", "zipkin url")
-	debug := flag.Bool("dbg", false, "Enable debug logging")
+	debug := flag.Bool("dbg", true, "Enable debug logging")
 	grpcTimeout = time.Duration(*flag.Int("grpcTimeout", 30, "Timeout in seconds for gRPC requests")) * time.Second
 
 	flag.Parse()

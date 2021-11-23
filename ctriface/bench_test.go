@@ -33,9 +33,9 @@ import (
 
 	ctrdlog "github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/ease-lab/vhive/metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"github.com/vhive-serverless/vhive/metrics"
 )
 
 const (
@@ -53,10 +53,20 @@ func TestBenchmarkStart(t *testing.T) {
 	log.SetLevel(log.InfoLevel)
 
 	testTimeout := 2000 * time.Second
-	ctx, cancel := context.WithTimeout(namespaces.WithNamespace(context.Background(), namespaceName), testTimeout)
+	ctx, cancel := context.WithTimeout(namespaces.WithNamespace(context.Background(), NamespaceName), testTimeout)
 	defer cancel()
 
-	orch := NewOrchestrator("devmapper", "", WithTestModeOn(true), WithUPF(*isUPFEnabled))
+	orch := NewOrchestrator(
+		"devmapper",
+		"",
+		"",
+		"",
+		10,
+		WithTestModeOn(true),
+		WithUPF(*isUPFEnabled),
+		WithFullLocal(*isFullLocal),
+	)
+	defer orch.Cleanup()
 
 	images := getAllImages()
 	benchCount := 10
@@ -69,13 +79,13 @@ func TestBenchmarkStart(t *testing.T) {
 		startMetrics := make([]*metrics.Metric, benchCount)
 
 		// Pull image
-		_, err := orch.getImage(ctx, imageName)
+		_, err := orch.GetImage(ctx, imageName)
 		require.NoError(t, err, "Failed to pull image "+imageName)
 
 		for i := 0; i < benchCount; i++ {
 			dropPageCache()
 
-			_, metric, err := orch.StartVM(ctx, vmIDString, imageName)
+			_, metric, err := orch.StartVM(ctx, vmIDString, imageName, 256, 1, false)
 			require.NoError(t, err, "Failed to start VM")
 			startMetrics[i] = metric
 
@@ -91,7 +101,6 @@ func TestBenchmarkStart(t *testing.T) {
 
 	}
 
-	orch.Cleanup()
 }
 
 func dropPageCache() {
@@ -116,14 +125,14 @@ func getOutFile(name string) string {
 
 func getAllImages() map[string]string {
 	return map[string]string{
-		"helloworld":   "ghcr.io/ease-lab/helloworld:var_workload",
-		"chameleon":    "ghcr.io/ease-lab/chameleon:var_workload",
-		"pyaes":        "ghcr.io/ease-lab/pyaes:var_workload",
-		"image_rotate": "ghcr.io/ease-lab/image_rotate:var_workload",
-		"json_serdes":  "ghcr.io/ease-lab/json_serdes:var_workload",
-		"lr_serving":   "ghcr.io/ease-lab/lr_serving:var_workload",
-		"cnn_serving":  "ghcr.io/ease-lab/cnn_serving:var_workload",
-		"rnn_serving":  "ghcr.io/ease-lab/rnn_serving:var_workload",
-		"lr_training":  "ghcr.io/ease-lab/lr_training:var_workload",
+		"helloworld":   "ghcr.io/vhive-serverless/helloworld:var_workload",
+		"chameleon":    "ghcr.io/vhive-serverless/chameleon:var_workload",
+		"pyaes":        "ghcr.io/vhive-serverless/pyaes:var_workload",
+		"image_rotate": "ghcr.io/vhive-serverless/image_rotate:var_workload",
+		"json_serdes":  "ghcr.io/vhive-serverless/json_serdes:var_workload",
+		"lr_serving":   "ghcr.io/vhive-serverless/lr_serving:var_workload",
+		"cnn_serving":  "ghcr.io/vhive-serverless/cnn_serving:var_workload",
+		"rnn_serving":  "ghcr.io/vhive-serverless/rnn_serving:var_workload",
+		"lr_training":  "ghcr.io/vhive-serverless/lr_training:var_workload",
 	}
 }

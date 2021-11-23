@@ -52,9 +52,9 @@ sudo apt-get install --yes docker-ce docker-ce-cli containerd.io >> /dev/null
 PWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 $PWD/../install_go.sh
 
-# install kind from ease-lab/kind
+# install kind from vhive-serverless/kind
 rm -rf /tmp/kind/
-git clone -b custom_docker_params_for_vHive_v0.12.0 https://github.com/ease-lab/kind /tmp/kind/
+git clone -b custom_docker_params_for_vHive_v0.12.0 https://github.com/vhive-serverless/kind /tmp/kind/
 cd /tmp/kind
 source /etc/profile && go build
 sudo mv kind /usr/local/bin/

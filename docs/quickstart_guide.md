@@ -57,7 +57,7 @@ SSD-equipped nodes are highly recommended. Full list of CloudLab nodes can be fo
 **On each node (both master and workers)**, execute the following instructions below **as a non-root user with sudo rights** using **bash**:
 1. Clone the vHive repository
     ```bash
-    git clone --depth=1 https://github.com/ease-lab/vhive.git
+    git clone --depth=1 https://github.com/vhive-serverless/vhive.git
     ```
 2. Change your working directory to the root of the repository:
     ```bash
@@ -130,6 +130,8 @@ SSD-equipped nodes are highly recommended. Full list of CloudLab nodes can be fo
     > By default, the microVMs are booted, `-snapshots` enables snapshots after the 2nd invocation of each function.
     >
     > If `-snapshots` and `-upf` are specified, the snapshots are accelerated with the Record-and-Prefetch (REAP) technique that we described in our ASPLOS'21 paper ([extended abstract][ext-abstract], [full paper](papers/REAP_ASPLOS21.pdf)).
+    >
+    > If `-snapshots` and `-fulllocal` are specified, a single snapshot can be used to restore many microVMs ([full local snapshots](./fulllocal_snapshots.md)). Note that this mode is currently not compatible with the REAP technique.
 
 ### 3. Configure Master Node
 **On the master node**, execute the following instructions below **as a non-root user with sudo rights** using **bash**:
@@ -285,4 +287,4 @@ for benchmarking asynchronous (i.e., Knative Eventing) case and more details abo
 [cloudlab-pf]: https://www.cloudlab.us/p/faas-sched/vhive-ubuntu20
 [cloudlab-hw]: https://docs.cloudlab.us/hardware.html
 [ext-abstract]: https://asplos-conference.org/abstracts/asplos21-paper212-extended_abstract.pdf
-[kn-benchmark]: https://github.com/ease-lab/vSwarm/blob/main/docs/adding_benchmarks.md
+[kn-benchmark]: https://github.com/vhive-serverless/vSwarm/blob/main/docs/adding_benchmarks.md

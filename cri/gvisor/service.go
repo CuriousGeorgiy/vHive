@@ -28,8 +28,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ease-lab/vhive/cri"
 	log "github.com/sirupsen/logrus"
+	"github.com/vhive-serverless/vhive/cri"
 	criapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 

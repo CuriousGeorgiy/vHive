@@ -8,7 +8,7 @@ If you need to test Knative functions in stock Knative environment (i.e., contai
 or in gVisor MicroVMs instead of Firecracker MicroVMs, use the following commands to set up the environment.
 
 ```bash
-git clone https://github.com/ease-lab/vhive
+git clone https://github.com/vhive-serverless/vhive
 cd vhive
 ./scripts/cloudlab/setup_node.sh [stock-only|gvisor|firecracker]
 sudo containerd
@@ -26,7 +26,7 @@ kn service apply
 
 ## Deploying single node container environment
 
-You can use the image to build/test/develop vHive inside a [kind container](https://github.com/ease-lab/kind).
+You can use the image to build/test/develop vHive inside a [kind container](https://github.com/vhive-serverless/kind).
 This image is preconfigured to run a single node Kubernetes cluster
 inside a container and contains packages to setup vHive on top of it.
 
@@ -54,7 +54,7 @@ docker exec -it <container name> bash
 > When running a vHive, or stock Knative, cluster inside a kind container,
 > one should not run setup scripts but start the daemon(s) and create the cluster right away.
 >
-> Currently, with Firecracker, running only a single-node cluster is supported ([Issue](https://github.com/ease-lab/vhive/issues/126) raised).
+> Currently, with Firecracker, running only a single-node cluster is supported ([Issue](https://github.com/vhive-serverless/vhive/issues/126) raised).
 > Running a multi-node cluster with stock Knative should work but is not tested.
 
 ### Clean up
@@ -108,13 +108,15 @@ We also offer self-hosted stock-Knative environments powered by KinD. To be able
 
 * vHive supports both the baseline Firecracker snapshots and our advanced
 Record-and-Prefetch (REAP) snapshots.
-
+  
 * vHive integrates with Kubernetes and Knative via its built-in CRI support.
 Currently, only Knative Serving is supported.
 
 * vHive supports arbitrary distributed setup of a serverless cluster.
 
 * vHive supports arbitrary functions deployed with OCI (Docker images).
+
+* Remote snapshot restore functionality can be integrated through the [full local snapshot functionality](./fulllocal_snapshots.md).
 
 * vHive has robust Continuous-Integration and our team is committed to deliver
 high-quality code.
@@ -180,11 +182,11 @@ Here are some useful commands (there are plenty of Zipkin tutorials online):
 ## Dependencies and binaries
 
 * vHive uses Firecracker-Containerd binaries that are build using the `user_page_faults` branch
-of our [fork](https://github.com/ease-lab/firecracker-containerd) of the upstream repository.
+of our [fork](https://github.com/vhive-serverless/firecracker-containerd) of the upstream repository.
 Currently, we are in the process of upstreaming VM snapshots support to the upstream repository.
 
 * Current Firecracker version is 0.24.0, Knative 1.4, Kubernetes 1.23.5, gVisor 20210622.0, and Istio 1.12.5.
 We plan to keep our code loosely up to date with the upstream Firecracker repository.
 
-* vHive uses a [fork](https://github.com/ease-lab/kind) of [kind](https://github.com/kubernetes-sigs/kind)
+* vHive uses a [fork](https://github.com/vhive-serverless/kind) of [kind](https://github.com/kubernetes-sigs/kind)
 to speed up testing environment setup requiring Kubernetes.

@@ -25,20 +25,26 @@ package firecracker
 import (
 	"context"
 	"errors"
+	"github.com/vhive-serverless/vhive/ctriface"
+	"strconv"
 	"sync"
 
-	"github.com/ease-lab/vhive/cri"
-	"github.com/ease-lab/vhive/ctriface"
 	log "github.com/sirupsen/logrus"
+	"github.com/vhive-serverless/vhive/cri"
 	criapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 const (
-	userContainerName = "user-container"
-	queueProxyName    = "queue-proxy"
-	guestIPEnv        = "GUEST_ADDR"
-	guestPortEnv      = "GUEST_PORT"
-	guestImageEnv     = "GUEST_IMAGE"
+	userContainerName            = "user-container"
+	queueProxyName               = "queue-proxy"
+	revisionEnv                  = "K_REVISION"
+	guestIPEnv                   = "GUEST_ADDR"
+	guestPortEnv                 = "GUEST_PORT"
+	guestImageEnv                = "GUEST_IMAGE"
+	guestMemorySizeMibEnv        = "MEM_SIZE_MB"
+	guestvCPUCountEnv            = "VCPU_COUNT"
+	defaultMemSize        uint32 = 256
+	defaultvCPUCount      uint32 = 1
 )
 
 type FirecrackerService struct {
@@ -57,7 +63,7 @@ type VMConfig struct {
 	guestPort string
 }
 
-func NewFirecrackerService(orch *ctriface.Orchestrator) (*FirecrackerService, error) {
+func NewFirecrackerService(orch *ctriface.Orchestrator, snapsCapacityMiB int64, isSparseSnaps, isFullLocal bool, isRemoteSnap bool) (*FirecrackerService, error) {
 	fs := new(FirecrackerService)
 	stockRuntimeClient, err := cri.NewStockRuntimeServiceClient()
 	if err != nil {
@@ -65,8 +71,9 @@ func NewFirecrackerService(orch *ctriface.Orchestrator) (*FirecrackerService, er
 		return nil, err
 	}
 	fs.stockRuntimeClient = stockRuntimeClient
-	fs.coordinator = newFirecrackerCoordinator(orch)
+	fs.coordinator = newFirecrackerCoordinator(orch, snapsCapacityMiB, isSparseSnaps, isFullLocal, isRemoteSnap)
 	fs.vmConfigs = make(map[string]*VMConfig)
+
 	return fs, nil
 }
 
@@ -81,9 +88,11 @@ func (s *FirecrackerService) CreateContainer(ctx context.Context, r *criapi.Crea
 	containerName := config.GetMetadata().GetName()
 
 	if containerName == userContainerName {
+		log.Debug("Cretqe user container")
 		return s.createUserContainer(ctx, r)
 	}
 	if containerName == queueProxyName {
+		log.Debug("Create queue proxy")
 		return s.createQueueProxy(ctx, r)
 	}
 
@@ -104,35 +113,75 @@ func (fs *FirecrackerService) createUserContainer(ctx context.Context, r *criapi
 	}()
 
 	config := r.GetConfig()
+	log.Debug("Print user container config")
+	log.Debug(config)
 	guestImage, err := getEnvVal(guestImageEnv, config)
 	if err != nil {
 		log.WithError(err).Error()
 		return nil, err
 	}
 
-	funcInst, err := fs.coordinator.startVM(context.Background(), guestImage)
+	revision, err := getEnvVal(revisionEnv, config)
+	log.Debug("Print user container revision")
+	log.Debug(revision)
+	if err != nil {
+		log.WithError(err).Error()
+		return nil, err
+	}
+
+	memSizeMib, err := getMemorySize(config)
+	log.Debug("Print user container memSizeMib")
+	log.Debug(memSizeMib)
+	if err != nil {
+		log.WithError(err).Error()
+		return nil, err
+	}
+
+	vCPUCount, err := getvCPUCount(config)
+	log.Debug("Print user container vCPUCount")
+	log.Debug(vCPUCount)
+	if err != nil {
+		log.WithError(err).Error()
+		return nil, err
+	}
+
+	funcInst, err := fs.coordinator.startVM(context.Background(), guestImage, revision, memSizeMib, vCPUCount)
+	log.Debug("Print user container funcInst")
+	log.Debug(funcInst)
 	if err != nil {
 		log.WithError(err).Error("failed to start VM")
 		return nil, err
 	}
 
 	guestPort, err := getEnvVal(guestPortEnv, config)
+	log.Debug("Print user container guestPort")
+	log.Debug(guestPort)
 	if err != nil {
 		log.WithError(err).Error()
 		return nil, err
 	}
 
+	// Temporarily store vm config so we can access this info when creating the queue-proxy container
 	vmConfig := &VMConfig{guestIP: funcInst.StartVMResponse.GuestIP, guestPort: guestPort}
+	log.Debug("Print user container vmConfig and sandbox id")
+	log.Debug(vmConfig)
+	log.Debug(r.GetPodSandboxId())
 	fs.insertVMConfig(r.GetPodSandboxId(), vmConfig)
 
 	// Wait for placeholder UC to be created
 	<-stockDone
-	
+
 	// Check for error from container creation
- 	if stockErr != nil {
- 		log.WithError(stockErr).Error("failed to create container")
- 		return nil, stockErr
- 	}
+	if stockErr != nil {
+		log.WithError(stockErr).Error("failed to create container")
+		return nil, stockErr
+	}
+
+	// Check for error from container creation
+	if stockErr != nil {
+		log.WithError(stockErr).Error("failed to create container")
+		return nil, stockErr
+	}
 
 	containerdID := stockResp.ContainerId
 	err = fs.coordinator.insertActive(containerdID, funcInst)
@@ -167,10 +216,19 @@ func (fs *FirecrackerService) createQueueProxy(ctx context.Context, r *criapi.Cr
 }
 
 func (fs *FirecrackerService) RemoveContainer(ctx context.Context, r *criapi.RemoveContainerRequest) (*criapi.RemoveContainerResponse, error) {
+	if r == nil {
+		log.Debug("R is nil")
+	}
 	log.Debugf("RemoveContainer for %q", r.GetContainerId())
+	log.Debug("RemoveContainer for %q", r.GetContainerId())
+	// inspect here
 	containerID := r.GetContainerId()
 
 	go func() {
+		if fs == nil {
+			log.Debug("fs is nil")
+		}
+		log.Debug(context.Background())
 		if err := fs.coordinator.stopVM(context.Background(), containerID); err != nil {
 			log.WithError(err).Error("failed to stop microVM")
 		}
@@ -184,6 +242,11 @@ func (fs *FirecrackerService) insertVMConfig(podID string, vmConfig *VMConfig) {
 	defer fs.Unlock()
 
 	fs.vmConfigs[podID] = vmConfig
+
+	log.Debug("Add to vm config")
+	for key, element := range fs.vmConfigs {
+		log.Debug(key, "=>", element)
+	}
 }
 
 func (fs *FirecrackerService) removeVMConfig(podID string) {
@@ -191,13 +254,24 @@ func (fs *FirecrackerService) removeVMConfig(podID string) {
 	defer fs.Unlock()
 
 	delete(fs.vmConfigs, podID)
+
+	log.Debug("Deleted from vm config")
+	for key, element := range fs.vmConfigs {
+		log.Debug(key, "=>", element)
+	}
 }
 
 func (fs *FirecrackerService) getVMConfig(podID string) (*VMConfig, error) {
 	fs.Lock()
 	defer fs.Unlock()
 
+	log.Debug("Fetch from vm config")
+	for key, element := range fs.vmConfigs {
+		log.Debug(key, "=>", element)
+	}
+
 	vmConfig, isPresent := fs.vmConfigs[podID]
+
 	if !isPresent {
 		log.Errorf("VM config for pod %s does not exist", podID)
 		return nil, errors.New("VM config for pod does not exist")
@@ -215,6 +289,37 @@ func getEnvVal(key string, config *criapi.ContainerConfig) (string, error) {
 
 	}
 
-	return "", errors.New("failed to provide non empty guest image in user container config")
+	return "", errors.New("failed to retrieve environment variable from user container config")
+}
 
+func getMemorySize(config *criapi.ContainerConfig) (uint32, error) {
+	envs := config.GetEnvs()
+	for _, kv := range envs {
+		if kv.GetKey() == guestMemorySizeMibEnv {
+			memSize, err := strconv.ParseUint(kv.GetValue(), 10, 32)
+			if err == nil {
+				return uint32(memSize), nil
+			} else {
+				return 0, err
+			}
+		}
+	}
+
+	return defaultMemSize, nil
+}
+
+func getvCPUCount(config *criapi.ContainerConfig) (uint32, error) {
+	envs := config.GetEnvs()
+	for _, kv := range envs {
+		if kv.GetKey() == guestvCPUCountEnv {
+			vCPUCount, err := strconv.ParseUint(kv.GetValue(), 10, 32)
+			if err == nil {
+				return uint32(vCPUCount), nil
+			} else {
+				return 0, err
+			}
+		}
+	}
+
+	return defaultvCPUCount, nil
 }

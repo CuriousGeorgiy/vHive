@@ -30,7 +30,7 @@ WITHSNAPSHOTS:=-snapshotsTest
 CTRDLOGDIR:=/tmp/ctrd-logs
 
 vhive: proto
-	go install github.com/ease-lab/vhive
+	go install github.com/vhive-serverless/vhive
 
 protobuf:
 	protoc -I proto/ proto/orchestrator.proto --go_out=plugins=grpc:proto
