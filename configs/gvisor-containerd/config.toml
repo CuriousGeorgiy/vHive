@@ -9,4 +9,5 @@ state = "/run/gvisor-containerd"
   runtime_type = "io.containerd.runsc.v1"
 
 [debug]
-  level = "debug"
+  address = "/run/gvisor-containerd/debug.sock"
+  level = "trace"

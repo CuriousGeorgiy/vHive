@@ -88,6 +88,7 @@ func (c *coordinator) startContainer(ctx context.Context, imageName string, envi
 	ctrID := strconv.Itoa(int(atomic.AddUint64(&c.nextID, 1)))
 	image, err := c.getImage(ctx, imageName)
 	if err != nil {
+		log.Errorf("failed to get container image: %v", err)
 		return nil, err
 	}
 	container, err := c.client.NewContainer(
@@ -101,6 +102,7 @@ func (c *coordinator) startContainer(ctx context.Context, imageName string, envi
 		),
 	)
 	if err != nil {
+		log.Errorf("failed to create container: %v", err)
 		return nil, err
 	}
 	defer func() {
@@ -114,6 +116,7 @@ func (c *coordinator) startContainer(ctx context.Context, imageName string, envi
 	// create a task from the container
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
+		log.Errorf("failed to create a task from the container: %v", err)
 		return nil, err
 	}
 	defer func() {
@@ -126,6 +129,7 @@ func (c *coordinator) startContainer(ctx context.Context, imageName string, envi
 
 	exitStatusC, err := task.Wait(ctx)
 	if err != nil {
+		log.Errorf("failed to wait for task execution: %v", err)
 		return nil, err
 	}
 
@@ -146,6 +150,7 @@ func (c *coordinator) startContainer(ctx context.Context, imageName string, envi
 	ip := result.Interfaces["eth0"].IPConfigs[0].IP.String()
 
 	if err := task.Start(ctx); err != nil {
+		log.Errorf("failed to start task: %v", err)
 		return nil, err
 	}
 	defer func() {
