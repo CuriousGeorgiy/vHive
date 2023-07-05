@@ -4852,7 +4852,7 @@ data:
     digest-resolution-timeout: "10s"
 
     # Duration we wait for the deployment to be ready before considering it failed.
-    progress-deadline: "600s"
+    progress-deadline: "1200s"
 
     # Sets the queue proxy's CPU request.
     # If omitted, a default value (currently "25m"), is used.
