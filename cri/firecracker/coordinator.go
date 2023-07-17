@@ -205,12 +205,12 @@ func (c *coordinator) startVM(ctx context.Context, image string, revision string
 	//}
 	//
 
-	if _, err := os.Stat("/users/estellan/vhive/memfile"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat("/users/glebedev/vhive/memfile"); errors.Is(err, os.ErrNotExist) {
 		return c.orchStartVM(ctx, image, revision, memSizeMib, vCPUCount)
 	}
-	filePathPatch := "/users/estellan/vhive/patchfile"
-	filePathSnap := "/users/estellan/vhive/snapfile"
-	filePathMem := "/users/estellan/vhive/memfile"
+	filePathPatch := "/users/glebedev/vhive/patchfile"
+	filePathSnap := "/users/glebedev/vhive/snapfile"
+	filePathMem := "/users/glebedev/vhive/memfile"
 
 	return c.orchStartVMSnapshotRemote(ctx, image, revision, memSizeMib, vCPUCount, filePathPatch, filePathSnap, filePathMem)
 }

@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	testImageName = "ghcr.io/vhive-serverless/helloworld:var_workload"
+	testImageName = "ghcr.io/ease-lab/helloworld:var_workload"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	coord = newFirecrackerCoordinator(nil, 10240, *isSparseSnaps, *isFullLocal, withoutOrchestrator())
+	coord = newFirecrackerCoordinator(nil, 10240, *isSparseSnaps, *isFullLocal, false, withoutOrchestrator())
 	flag.Parse()
 	ret := m.Run()
 	os.Exit(ret)

@@ -48,6 +48,7 @@ var (
 	isLazyModeTest         = flag.Bool("lazyTest", false, "Enable lazy serving mode when UPFs are enabled")
 	isWithCache            = flag.Bool("withCache", false, "Do not drop the cache before measurements")
 	benchDir               = flag.String("benchDirTest", "bench_results", "Directory where stats should be saved")
+	fID                    = flag.String("fid", "1", "Function identifier")
 )
 
 func TestMain(m *testing.M) {
@@ -61,7 +62,7 @@ func TestMain(m *testing.M) {
 
 	log.SetOutput(os.Stdout)
 
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 
 	flag.Parse()
 
@@ -81,6 +82,9 @@ func TestMain(m *testing.M) {
 		10,
 		ctriface.WithTestModeOn(true),
 		ctriface.WithSnapshots(*isSnapshotsEnabledTest),
+		ctriface.WithSnapshotsDir("/users/glebedev/vhive/snaps"),
+		ctriface.WithFullLocal(true),
+		ctriface.WithRemoteSnap(true),
 		ctriface.WithUPF(*isUPFEnabledTest),
 		ctriface.WithMetricsMode(*isMetricsModeTest),
 		ctriface.WithLazyMode(*isLazyModeTest),
@@ -99,24 +103,25 @@ func TestMain(m *testing.M) {
 }
 
 func TestSendToFunctionSerial(t *testing.T) {
-	fID := "1"
 	var (
 		servedTh      uint64
 		pinnedFuncNum int
 	)
 	funcPool = NewFuncPool(!isSaveMemoryConst, servedTh, pinnedFuncNum, isTestModeConst)
 
-	for i := 0; i < 2; i++ {
-		resp, _, err := funcPool.Serve(context.Background(), fID, testImageName, "world")
+	for i := 0; i < 8; i++ {
+		resp, _, err := funcPool.Serve(context.Background(), *fID, testImageName, "world")
 		require.NoError(t, err, "Function returned error")
 		if i == 0 {
 			require.Equal(t, resp.IsColdStart, true)
+		} else {
+			require.Equal(t, resp.IsColdStart, false)
 		}
 
 		require.Equal(t, resp.Payload, "Hello, world!")
 	}
 
-	message, err := funcPool.RemoveInstance(fID, testImageName, true)
+	message, err := funcPool.RemoveInstance(*fID, testImageName, true)
 	require.NoError(t, err, "Function returned error, "+message)
 }
 
@@ -290,16 +295,16 @@ func TestAllFunctions(t *testing.T) {
 	}
 
 	images := []string{
-		"ghcr.io/vhive-serverless/helloworld:var_workload",
-		"ghcr.io/vhive-serverless/chameleon:var_workload",
-		"ghcr.io/vhive-serverless/pyaes:var_workload",
-		"ghcr.io/vhive-serverless/image_rotate:var_workload",
-		"ghcr.io/vhive-serverless/json_serdes:var_workload",
-		"ghcr.io/vhive-serverless/lr_serving:var_workload",
-		"ghcr.io/vhive-serverless/cnn_serving:var_workload",
-		"ghcr.io/vhive-serverless/rnn_serving:var_workload",
-		"ghcr.io/vhive-serverless/lr_training:var_workload",
-		"ghcr.io/vhive-serverless/springboot:var_workload",
+		"ghcr.io/ease-lab/helloworld:var_workload",
+		"ghcr.io/ease-lab/chameleon:var_workload",
+		"ghcr.io/ease-lab/pyaes:var_workload",
+		"ghcr.io/ease-lab/image_rotate:var_workload",
+		"ghcr.io/ease-lab/json_serdes:var_workload",
+		"ghcr.io/ease-lab/lr_serving:var_workload",
+		"ghcr.io/ease-lab/cnn_serving:var_workload",
+		"ghcr.io/ease-lab/rnn_serving:var_workload",
+		"ghcr.io/ease-lab/lr_training:var_workload",
+		"ghcr.io/ease-lab/springboot:var_workload",
 	}
 	var (
 		servedTh      uint64

@@ -179,6 +179,16 @@ func (o *Orchestrator) GetUPFEnabled() bool {
 	return o.isUPFEnabled
 }
 
+// GetFullLocal Returns the full local snapshot mode of the orchestrator
+func (o *Orchestrator) GetFullLocal() bool {
+	return o.isFullLocal
+}
+
+// GetRemoteSnap Returns the remote snapshot mode of the orchestrator
+func (o *Orchestrator) GetRemoteSnap() bool {
+	return o.isRemoteSnap
+}
+
 // DumpUPFPageStats Dumps the memory manager's stats about the number of
 // the unique pages and the number of the pages that are reused across invocations
 func (o *Orchestrator) DumpUPFPageStats(vmID, functionName, metricsOutFilePath string) error {

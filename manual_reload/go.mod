@@ -16,14 +16,11 @@ replace (
 )
 
 require (
-	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/containerd/containerd v1.5.2
 	github.com/coreos/go-iptables v0.5.0
 	github.com/firecracker-microvm/firecracker-containerd v0.0.0-20210604232636-c2323bc71886
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/tamerh/xml-stream-parser v1.4.0
-	github.com/tamerh/xpath v1.0.0 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
 )

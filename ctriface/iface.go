@@ -57,7 +57,7 @@ import (
 )
 
 const (
-	TestImageName = "ghcr.io/vhive-serverless/helloworld:var_workload"
+	TestImageName = "ghcr.io/ease-lab/helloworld:var_workload"
 )
 
 // StartVM Boots a VM if it does not exist
@@ -115,9 +115,10 @@ func (o *Orchestrator) StartVM(ctx context.Context, vmID, imageName string, memS
 
 	defer func() {
 		if retErr != nil {
-			if _, err := o.fcClient.StopVM(ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
-				logger.WithError(err).Errorf("failed to stop firecracker-containerd VM after failure")
-			}
+			logger.Info("Stopping vm")
+			//if _, err := o.fcClient.StopVM(ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
+			//	logger.WithError(err).Errorf("failed to stop firecracker-containerd VM after failure")
+			//}
 		}
 	}()
 
@@ -310,10 +311,11 @@ func (o *Orchestrator) StopSingleVM(ctx context.Context, vmID string) error {
 	//}
 
 	// Stop VM
-	if _, err := o.fcClient.StopVM(ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
-		logger.WithError(err).Error("failed to stop firecracker-containerd VM")
-		return err
-	}
+	logger.Info("Stopping vm")
+	//if _, err := o.fcClient.StopVM(ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
+	//	logger.WithError(err).Error("failed to stop firecracker-containerd VM")
+	//	return err
+	//}
 
 	// Free VM metadata and clean up network
 	if err := o.vmPool.Free(vmID); err != nil {
