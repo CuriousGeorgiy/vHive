@@ -79,7 +79,7 @@ sudo rm /var/lib/cni/networks/fcnet*/last_reserved_ip.0 || echo clean already
 sudo rm /var/lib/cni/networks/fcnet*/19* || echo clean already
 
 echo Cleaning snapshots
-sudo rm -rf /fccd/snapshots/*
+#sudo rm -rf /fccd/snapshots/*
 
 echo Creating a fresh devmapper
 source $DIR/create_devmapper.sh

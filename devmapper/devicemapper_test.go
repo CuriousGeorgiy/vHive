@@ -41,16 +41,16 @@ import (
 const (
 	containerdAddress = "/run/firecracker-containerd/containerd.sock"
 	NamespaceName     = "containerd"
-	TestImageName     = "ghcr.io/vhive-serverless/helloworld:var_workload"
+	TestImageName     = "ghcr.io/ease-lab/helloworld:var_workload"
 )
 
 func getAllImages() map[string]string {
 	return map[string]string{
-		"helloworld":   "ghcr.io/vhive-serverless/helloworld:var_workload",
-		"chameleon":    "ghcr.io/vhive-serverless/chameleon:var_workload",
-		"pyaes":        "ghcr.io/vhive-serverless/pyaes:var_workload",
-		"image_rotate": "ghcr.io/vhive-serverless/image_rotate:var_workload",
-		"lr_training":  "ghcr.io/vhive-serverless/lr_training:var_workload",
+		"helloworld":   "ghcr.io/ease-lab/helloworld:var_workload",
+		"chameleon":    "ghcr.io/ease-lab/chameleon:var_workload",
+		"pyaes":        "ghcr.io/ease-lab/pyaes:var_workload",
+		"image_rotate": "ghcr.io/ease-lab/image_rotate:var_workload",
+		"lr_training":  "ghcr.io/ease-lab/lr_training:var_workload",
 	}
 }
 

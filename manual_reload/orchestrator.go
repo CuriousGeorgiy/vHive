@@ -1,4 +1,4 @@
-package manual_reload
+package main
 
 import (
 	"context"
@@ -509,10 +509,10 @@ func (orch *Orchestrator) stopVm(vmID string) error {
 	}
 
 	fmt.Println("Stopping vm")
-	if _, err := orch.fcClient.StopVM(orch.ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
-		log.Printf("failed to stop the vm")
-		return err
-	}
+	//if _, err := orch.fcClient.StopVM(orch.ctx, &proto.StopVMRequest{VMID: vmID}); err != nil {
+	//	log.Printf("failed to stop the vm")
+	//	return err
+	//}
 
 	if vmInfo.snapBooted {
 		fmt.Printf("Removing snapshot %s\n", vmInfo.containerSnapKey)

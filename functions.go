@@ -297,7 +297,7 @@ func (f *Function) Serve(ctx context.Context, fID, imageName, reqPayload string)
 		}
 	}
 
-	if orch.GetSnapshotsEnabled() {
+	if orch.GetSnapshotsEnabled() && !orch.GetRemoteSnap() {
 		f.OnceCreateSnapInstance.Do(
 			func() {
 				logger.Debug("First time offloading, need to create a snapshot first")
@@ -354,7 +354,7 @@ func (f *Function) AddInstance() *metrics.Metric {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel()
 
-	if f.isSnapshotReady {
+	if f.isSnapshotReady || orch.GetRemoteSnap() {
 		metr = f.LoadInstance()
 	} else {
 		resp, _, err := orch.StartVM(ctx, f.getVMID(), f.imageName, 256, 1, false)
@@ -411,7 +411,7 @@ func (f *Function) RemoveInstance(isSync bool) (string, error) {
 
 	f.OnceAddInstance = new(sync.Once)
 
-	if orch.GetSnapshotsEnabled() {
+	if orch.GetSnapshotsEnabled() && !orch.GetFullLocal() {
 		f.OffloadInstance()
 		r = "Successfully offloaded instance " + f.vmID
 	} else {
@@ -452,6 +452,10 @@ func (f *Function) CreateInstanceSnapshot() {
 	}
 
 	snap := snapshotting.NewSnapshot(f.vmID, "/fccd/snapshots", f.imageName, 256, 1, false)
+	err = snap.CreateSnapDir()
+	if err != nil {
+		log.Panic(errors.Wrapf(err, "creating snapDir for function '%s'", f.fID))
+	}
 	err = orch.CreateSnapshot(ctx, f.vmID, snap)
 	if err != nil {
 		log.Panic(err)
@@ -489,11 +493,14 @@ func (f *Function) LoadInstance() *metrics.Metric {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 
-	snap := snapshotting.NewSnapshot(f.vmID, "/fccd/snapshots", f.imageName, 256, 1, false)
-	_, loadMetr, err := orch.LoadSnapshot(ctx, f.vmID, snap)
+	snap := snapshotting.NewSnapshot(f.getVMID(), "/fccd/snapshots", f.imageName, 256, 1, false)
+	resp, loadMetr, err := orch.LoadSnapshot(ctx, f.getVMID(), snap)
 	if err != nil {
 		log.Panic(err)
 	}
+	f.guestIP = resp.GuestIP
+	f.vmID = f.getVMID()
+	f.lastInstanceID++
 
 	resumeMetr, err := orch.ResumeVM(ctx, f.vmID)
 	if err != nil {
