@@ -38,18 +38,22 @@ echo 1 > ~/counter.txt
 # Steps
 - Start firecracker-containerd in a new terminal
 ```
-sudo firecracker-containerd --config /etc/firecracker-containerd/config.toml
+sudo screen -dmS firecracker /usr/local/bin/firecracker-containerd --config /etc/firecracker-containerd/config.toml
 ```
 - Build go program for reloading
 ```
 go build -o taskworkflow
+```
+- Create a snapshot
+```
+sudo ./firecracker-containerd-example -makesnap -vmid "3" -image "ghcr.io/ease-lab/helloworld:var_workload" -revision "test-revision" -snapsbase "/users/glebedev/vhive/manual_reload/test-snaps"
 ```
 - Boot from snapshot (replace the hardcoded paths of the snapshot files; arguments are irelevant but left in place for future usage)
 ```
 uuid=$(< ~/counter.txt)
 echo $((uuid+1)) > ~/counter.txt
 echo $uuid
-sudo ./taskworkflow -bootsnap -vmid $uuid -revision "dummy-revision" -snapsbase "/users/estellan/vhive/manual_reload/snaps"
+sudo ./firecracker-containerd-example -bootsnap -vmid "3" -revision "test-revision" -snapsbase "/users/glebedev/vhive/manual_reload/test-snaps"
 ```
 
 Now, the uVM is started and this is confirmed by the logs of firecracker-containerd, which also gives the IP address of the uVM.

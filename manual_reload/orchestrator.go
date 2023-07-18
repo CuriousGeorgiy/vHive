@@ -1,4 +1,4 @@
-package manual_reload
+package main
 
 import (
 	"context"

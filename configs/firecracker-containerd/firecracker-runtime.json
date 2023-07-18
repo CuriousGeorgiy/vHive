@@ -5,7 +5,7 @@
   "cpu_count": 1,
   "cpu_template": "T2",
   "log_fifo": "fc-logs.fifo",
-  "log_levels": ["info"],
+  "log_levels": ["debug"],
   "metrics_fifo": "fc-metrics.fifo",
   "kernel_args": "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules ro systemd.journald.forward_to_console systemd.unit=firecracker.target init=/sbin/overlay-init",
   "jailer": {

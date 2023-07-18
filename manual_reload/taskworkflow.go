@@ -1,5 +1,4 @@
-// TODO: may need changing
-package manual_reload
+package main
 
 import (
 	"flag"
@@ -129,7 +128,7 @@ func bootSnapshot(orch *Orchestrator, vmID, revision string) error {
 	//	return err
 	//}
 
-	err := orch.restoreInfo(vmID, snapshotKey, "/users/estellan/firecracker-containerd-example/hello/infofile")
+	err := orch.restoreInfo(vmID, snapshotKey, "/users/glebedev/vhive/manual_reload/test-snaps/test-revision/infofile")
 	if err != nil {
 		return errors.Wrapf(err, "restoring info file")
 	}
@@ -149,7 +148,7 @@ func bootSnapshot(orch *Orchestrator, vmID, revision string) error {
 	//time.Sleep(10 * time.Second)
 
 	start = time.Now()
-	err = orch.restorePatch(containerDevicePath, "/users/estellan/firecracker-containerd-example/hello/patchfile")
+	err = orch.restorePatch(containerDevicePath, "/users/glebedev/vhive/manual_reload/test-snaps/test-revision/patchfile")
 	if err != nil {
 		return errors.Wrapf(err, "restoring patch")
 	}
@@ -157,7 +156,7 @@ func bootSnapshot(orch *Orchestrator, vmID, revision string) error {
 
 	//time.Sleep(10 * time.Second)
 
-	err = orch.bootSnapshot(vmID, "/users/estellan/firecracker-containerd-example/hello/snapfile", "/users/estellan/firecracker-containerd-example/hello/memfile", containerDevicePath)
+	err = orch.bootSnapshot(vmID, "/users/glebedev/vhive/manual_reload/test-snaps/test-revision/snapfile", "/users/glebedev/vhive/manual_reload/test-snaps/test-revision/memfile", containerDevicePath)
 	if err != nil {
 		return errors.Wrapf(err, "booting snapshot")
 	}
