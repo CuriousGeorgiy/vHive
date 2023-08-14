@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/containerd/containerd/mount"
+	"golang.org/x/sys/unix"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
@@ -53,7 +54,19 @@ func suspendSnapDev(snapMount *mount.Mount) error {
 	cmd := exec.Command("sudo", "dmsetup", "suspend", snapMount.Source)
 	err := cmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "suspending snapshot %s", snapMount.Source)
+		return fmt.Errorf("suspending snapshot device: %w", err)
+	}
+	return nil
+}
+
+func flushSnapDev(snapMount *mount.Mount) error {
+	if device, err := os.OpenFile(snapMount.Source, os.O_RDWR, 0); err != nil {
+		return fmt.Errorf("opening snapshot device: %w", err)
+	} else {
+		if err := unix.IoctlSetInt(int(device.Fd()), unix.BLKFLSBUF, 0); err != nil {
+			return fmt.Errorf("flushing snapshot device: %w", err)
+		}
+		_ = device.Close()
 	}
 	return nil
 }
@@ -62,7 +75,7 @@ func resumeSnapDev(snapMount *mount.Mount) error {
 	cmd := exec.Command("sudo", "dmsetup", "resume", snapMount.Source)
 	err := cmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "suspending snapshot %s", snapMount.Source)
+		return fmt.Errorf("resuming snapshot device: %w", err)
 	}
 	return nil
 }

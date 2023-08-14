@@ -15,6 +15,8 @@ sudo apt-get install -y docker-ce docker-ce-cli aufs-tools
 
 sudo usermod -aG docker ${USER}
 sudo su - ${USER}
+
+docker run -d --network host --restart=always --name registry registry:2
 ````
 
 - Setup network
@@ -34,18 +36,20 @@ sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 - Start firecracker-containerd in a new terminal
 ```
 sudo /usr/local/bin/firecracker-containerd --config /etc/firecracker-containerd/config.toml
+sudo /usr/local/bin/firecracker-containerd --config /etc/firecracker-containerd/config.toml 2>&1 | tee fctr.out
 ```
 - Build go program for reloading
 ```
-go build -o taskworkflow
+go build
 ```
 - Create a snapshot
 ```
 sudo ./vanilla-firecracker-snapshots -make-snap -id "<VM identifier>" -image "docker.io/library/nginx:1.17-alpine" -revision "<revision identifier>" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
+sudo ./vanilla-firecracker-snapshots -make-snap -id "<VM identifier>" -image "docker.io/qorbani/golang-hello-world" -revision "<revision identifier>" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
 ```
 - Boot from snapshot
 ```
-sudo ./firecracker-containerd-example -bootsnap -vmid "<VM id>" -revision "<container snapshot revision>" -snapsbase "/users/glebedev/vhive/manual_reload/test-snaps"
+sudo ./vanilla-firecracker-snapshots -boot-from-snap -id "<VM id>" -revision "<container snapshot revision>" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
 ```
 
 Now, the uVM is started and this is confirmed by the logs of firecracker-containerd, which also gives the IP address of the uVM.

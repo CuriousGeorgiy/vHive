@@ -1,6 +1,7 @@
 package snapshotting
 
 import (
+	"fmt"
 	"path/filepath"
 )
 
@@ -8,7 +9,6 @@ import (
 type Snapshot struct {
 	id           string // Snapshot identified by K_REVISION env variable (eg. helloworld-go-00001)
 	baseFolder   string
-	img          string
 	totalSizeMiB int
 }
 
@@ -29,7 +29,7 @@ func (snp *Snapshot) GetMemFilePath() string {
 }
 
 func (snp *Snapshot) GetCtrSnapCommitName() string {
-	return snp.img+"-commit-"+snp.id
+	return fmt.Sprintf("revision-%s-commit", snp.id)
 }
 
 func (snp *Snapshot) GetInfoFilePath() string {

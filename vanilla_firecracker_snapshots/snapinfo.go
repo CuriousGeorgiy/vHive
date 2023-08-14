@@ -8,10 +8,11 @@ import (
 
 type Snapshot struct {
 	Img               string
+	CtrSnapPath       string
 	CtrSnapCommitName string
 	MemSizeMib        uint32
-	VCPUCount    uint32
-	TotalSizeMiB int64
+	VCPUCount         uint32
+	TotalSizeMiB      int64
 }
 
 func serializeSnapInfo(storePath string, snapInfo Snapshot) error {
