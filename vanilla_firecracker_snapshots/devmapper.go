@@ -60,13 +60,16 @@ func suspendSnapDev(snapMount *mount.Mount) error {
 }
 
 func flushSnapDev(snapMount *mount.Mount) error {
-	if device, err := os.OpenFile(snapMount.Source, os.O_RDWR, 0); err != nil {
+	if dev, err := os.OpenFile(snapMount.Source, os.O_RDWR, 0); err != nil {
 		return fmt.Errorf("opening snapshot device: %w", err)
 	} else {
-		if err := unix.IoctlSetInt(int(device.Fd()), unix.BLKFLSBUF, 0); err != nil {
-			return fmt.Errorf("flushing snapshot device: %w", err)
+		if err := dev.Sync(); err != nil {
+			return fmt.Errorf("flushing snapshot device via fsync: %w", err)
 		}
-		_ = device.Close()
+		if err := unix.IoctlSetInt(int(dev.Fd()), unix.BLKFLSBUF, 0); err != nil {
+			return fmt.Errorf("flushing snapshot device via BLKFLSBUF: %w", err)
+		}
+		_ = dev.Close()
 	}
 	return nil
 }

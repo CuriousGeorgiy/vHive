@@ -8,7 +8,7 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200224152610-e50cd9704f63
 )
 
-replace github.com/firecracker-microvm/firecracker-containerd => github.com/curiousgeorgiy/firecracker-containerd v0.0.0-20230817095412-6da50979c1ba
+replace github.com/firecracker-microvm/firecracker-containerd => github.com/curiousgeorgiy/firecracker-containerd v0.0.0-20230817102021-8793190b4f74
 
 require (
 	github.com/containerd/containerd v1.6.20

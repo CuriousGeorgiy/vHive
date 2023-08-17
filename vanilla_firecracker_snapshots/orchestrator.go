@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"syscall"
 	"net/http"
 
@@ -267,7 +268,7 @@ func (orch *Orchestrator) commitCtrSnap(vmID, snapCommitName string) error {
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc72.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc71.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		img.Target(), containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {
 		return fmt.Errorf("pushing container snapshot patch: %w", err)
@@ -283,7 +284,7 @@ func (orch *Orchestrator) pullCtrSnapCommit(snapCommitName string) (*containerd.
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc72.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc71.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		containerd.WithPullUnpack, containerd.WithPullSnapshotter(snapshotter),
 		containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {
@@ -315,14 +316,14 @@ func (orch *Orchestrator) createSnapshot(vmID, revision string) error {
 		return fmt.Errorf("creating VM snapshot: %w", err)
 	}
 
-	log.Println("Suspending container snapshot device")
-	if err := suspendSnapDev(vmInfo.containerSnapMount); err != nil {
-		return fmt.Errorf("suspending container snapshot device: %w", err)
-	}
-
 	log.Println("Flushing container snapshot device")
 	if err := flushSnapDev(vmInfo.containerSnapMount); err != nil {
 		return fmt.Errorf("flushing container snapshot device: %w", err)
+	}
+
+	log.Println("Suspending container snapshot device")
+	if err := suspendSnapDev(vmInfo.containerSnapMount); err != nil {
+		return fmt.Errorf("suspending container snapshot device: %w", err)
 	}
 
 	log.Println("Resuming container snapshot device")
@@ -385,6 +386,7 @@ func (orch *Orchestrator) bootVMFromSnapshot(vmID, revision string) error {
 	if err != nil {
 		return fmt.Errorf("restoring snapshot information: %w", err)
 	}
+	log.Printf("vmInfo.ctrSnapPath=%s\n", vmInfo.ctrSnapPath)
 
 	log.Println("Pulling container snapshot commit")
 	img, err := orch.pullCtrSnapCommit(vmInfo.ctrSnapCommitName)
@@ -398,9 +400,13 @@ func (orch *Orchestrator) bootVMFromSnapshot(vmID, revision string) error {
 		return fmt.Errorf("creating container snapshot: %w", err)
 	}
 
-	if err = mount.All([]mount.Mount{ctrSnapMount}, vmInfo.ctrSnapPath); err != nil {
-		return fmt.Errorf("mounting container snapshot to original path: %w", err)
+	if err := os.Link(ctrSnapMount.Source, vmInfo.ctrSnapPath); err != nil {
+		return fmt.Errorf("creating original container snapshot path: %w", err)
 	}
+
+	//if err = mount.All([]mount.Mount{*ctrSnapMount}, vmInfo.ctrSnapPath); err != nil {
+	//	return fmt.Errorf("mounting container snapshot to original path: %w", err)
+	//}
 
 	createVMRequest := &proto.CreateVMRequest{
 		VMID: vmID,
