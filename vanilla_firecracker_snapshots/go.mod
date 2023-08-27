@@ -8,7 +8,7 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200224152610-e50cd9704f63
 )
 
-replace github.com/firecracker-microvm/firecracker-containerd => github.com/curiousgeorgiy/firecracker-containerd v0.0.0-20230824110139-6bcb731a02a4
+replace github.com/firecracker-microvm/firecracker-containerd => github.com/curiousgeorgiy/firecracker-containerd v0.0.0-20230827193625-5e898e2012a5
 
 require (
 	github.com/containerd/containerd v1.6.20
@@ -17,7 +17,7 @@ require (
 	github.com/firecracker-microvm/firecracker-containerd v0.0.0-20230718221715-2a60b1c50228
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
 	github.com/pkg/errors v0.9.1
-	github.com/vishvananda/netlink v1.1.1-0.20220318152240-083e92e21eeb
+	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74
 )
 
