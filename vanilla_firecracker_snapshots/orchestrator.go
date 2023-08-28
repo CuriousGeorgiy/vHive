@@ -266,7 +266,7 @@ func (orch *Orchestrator) commitCtrSnap(vmID, snapCommitName string) error {
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc69.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc91.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		img.Target(), containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {
 		return fmt.Errorf("pushing container snapshot patch: %w", err)
@@ -282,7 +282,7 @@ func (orch *Orchestrator) pullCtrSnapCommit(snapCommitName string) (*containerd.
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc69.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc91.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		containerd.WithPullUnpack, containerd.WithPullSnapshotter(snapshotter),
 		containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {

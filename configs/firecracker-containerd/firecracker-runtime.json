@@ -5,5 +5,17 @@
   "root_drive": "/var/lib/firecracker-containerd/runtime/default-rootfs.img",
   "cpu_template": "T2",
   "log_levels": ["debug"],
+  "default_network_interfaces": [
+    {
+      "StaticConfig": {
+        "MacAddress": "AA:FC:00:00:00:01",
+        "HostDevName": "tap0",
+        "IPConfig": {
+          "PrimaryAddr": "172.16.0.2/24",
+          "GatewayAddr": "172.16.0.1"
+        }
+      }
+    }
+  ],
   "debug": true
 }

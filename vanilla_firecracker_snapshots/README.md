@@ -35,6 +35,11 @@ go build
 - Create a snapshot
 ```
 sudo ./vanilla-firecracker-snapshots -make-snap -id "0" -image "docker.io/library/nginx:1.17-alpine" -revision "0" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
+
+sudo ./vanilla-firecracker-snapshots -make-snap -id "0" -image "docker.io/curiousgeorgiy/nginx:1.17-alpine-esgz" -revision "0" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
+
+sudo ./vanilla-firecracker-snapshots -make-snap -id "0" -image "ghcr.io/firecracker-microvm/firecracker-containerd/amazonlinux:latest-esgz" -revision "0" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
+
 sudo ./vanilla-firecracker-snapshots -make-snap -id "<VM identifier>" -image "docker.io/qorbani/golang-hello-world" -revision "<revision identifier>" -snapshots-base-path "/users/glebedev/vhive/vanilla_firecracker_snapshots/snaps"
 "docker.io/curiousgeorgiy/golang-hello-world:latest"
 ```
@@ -49,3 +54,22 @@ Now, the uVM is started and this is confirmed by the logs of firecracker-contain
 ```
 curl http://<VM IP address>:<container port>
 ```
+
+
+curl --unix-socket /var/lib/firecracker-containerd/shim-base/default#8d0ddb3e-85c7-4a7d-bf37-97522b0010ab/firecracker.sock -i \
+-X PATCH 'http://localhost/vm' \
+-H 'Accept: application/json' \
+-H 'Content-Type: application/json' \
+-d '{
+"state": "Paused"
+}'
+
+curl --unix-socket /var/lib/firecracker-containerd/shim-base/default#8d0ddb3e-85c7-4a7d-bf37-97522b0010ab/firecracker.sock -i \
+-X PUT 'http://localhost/snapshot/create' \
+-H  'Accept: application/json' \
+-H  'Content-Type: application/json' \
+-d '{
+"snapshot_type": "Full",
+"snapshot_path": "./snapshot_file",
+"mem_file_path": "./mem_file"
+}'
