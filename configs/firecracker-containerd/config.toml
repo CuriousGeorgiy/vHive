@@ -9,5 +9,10 @@ state = "/run/firecracker-containerd"
     base_image_size = "10GB"
     root_path = "/var/lib/firecracker-containerd/snapshotter/devmapper"
 
+[proxy_plugins]
+  [proxy_plugins.proxy]
+    type = "snapshot"
+    address = "/var/lib/demux-snapshotter/snapshotter.sock"
+
 [debug]
   level = "debug"

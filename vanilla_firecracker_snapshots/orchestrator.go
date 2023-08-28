@@ -12,9 +12,9 @@ import (
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/containerd/mount"
+	"github.com/containerd/stargz-snapshotter/fs/source"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/remotes/docker/config"
 	fcclient "github.com/firecracker-microvm/firecracker-containerd/firecracker-control/client"
@@ -58,14 +58,14 @@ type Orchestrator struct {
 }
 
 // NewOrchestrator Initializes a new orchestrator
-func NewOrchestrator(snapshotter, containerdNamespace, snapsBasePath string) (*Orchestrator, error) {
+func NewOrchestrator(snapshotter, vmID, snapsBasePath string) (*Orchestrator, error) {
 	var err error
 
 	orch := new(Orchestrator)
 	orch.cachedImages = make(map[string]containerd.Image)
 	orch.vms = make(map[string]VMInfo)
 	orch.snapshotter = snapshotter
-	orch.ctx = namespaces.WithNamespace(context.Background(), containerdNamespace)
+	orch.ctx = namespaces.WithNamespace(context.Background(), vmID)
 	orch.networkManager = networking.NewNetworkManager()
 
 	orch.snapshotManager = snapshotting.NewSnapshotManager(snapsBasePath)
@@ -119,6 +119,7 @@ func (orch *Orchestrator) getContainerImage(imageName string) (*containerd.Image
 		image, err = orch.client.Pull(orch.ctx, imageURL,
 			containerd.WithPullUnpack,
 			containerd.WithPullSnapshotter(snapshotter),
+			containerd.WithImageHandlerWrapper(source.AppendDefaultLabelsHandlerWrapper(imageURL, 10*1024*1024)),
 		)
 
 		if err != nil {
@@ -176,17 +177,27 @@ func (orch *Orchestrator) createVM(vmID string) error {
 			VcpuCount:  2,
 			MemSizeMib: 2048,
 		},
-		NetworkInterfaces: []*proto.FirecrackerNetworkInterface{{
-			StaticConfig: &proto.StaticNetworkConfiguration{
-				MacAddress:  macAddress,
-				HostDevName: hostDevName,
-				IPConfig: &proto.IPConfiguration{
-					PrimaryAddr: orch.networkManager.GetConfig(vmID).GetContainerCIDR(),
-					GatewayAddr: orch.networkManager.GetConfig(vmID).GetGatewayIP(),
-					Nameservers: []string{"8.8.8.8"},
+		NetworkInterfaces: []*proto.FirecrackerNetworkInterface{
+			{
+				StaticConfig: &proto.StaticNetworkConfiguration{
+					MacAddress:  macAddress,
+					HostDevName: hostDevName,
+					IPConfig: &proto.IPConfiguration{
+						PrimaryAddr: orch.networkManager.GetConfig(vmID).GetContainerCIDR(),
+						GatewayAddr: orch.networkManager.GetConfig(vmID).GetGatewayIP(),
+						Nameservers: []string{"8.8.8.8"},
+					},
 				},
 			},
-		}},
+			//{
+			//	AllowMMDS: true,
+			//	// This assumes the demo CNI network has been installed
+			//	CNIConfig: &proto.CNIConfiguration{
+			//		NetworkName:   "fcnet",
+			//		InterfaceName: "veth0",
+			//	},
+			//},
+		},
 		NetNS: orch.networkManager.GetConfig(vmID).GetNamespacePath(),
 	}
 
@@ -194,6 +205,15 @@ func (orch *Orchestrator) createVM(vmID string) error {
 	_, err := orch.fcClient.CreateVM(orch.ctx, createVMRequest)
 	if err != nil {
 		return fmt.Errorf("creating firecracker VM: %w", err)
+	}
+
+	log.Println("Setting firecracker VM metadata")
+	_, err = orch.fcClient.SetVMMetadata(orch.ctx, &proto.SetVMMetadataRequest{
+		VMID:     vmID,
+		Metadata: dockerMetadata,
+	})
+	if err != nil {
+		return fmt.Errorf("setting firecracker VM metadata: %w", err)
 	}
 
 	return nil
@@ -207,7 +227,7 @@ func (orch *Orchestrator) startContainer(vmID, snapKey, imageName string, image 
 		containerd.WithSnapshotter(orch.snapshotter),
 		containerd.WithNewSnapshot(snapKey, *image),
 		containerd.WithNewSpec(
-			oci.WithImageConfig(*image),
+			firecrackeroci.WithVMLocalImageConfig(*image),
 			firecrackeroci.WithVMID(vmID),
 			firecrackeroci.WithVMNetwork,
 		),
@@ -266,7 +286,7 @@ func (orch *Orchestrator) commitCtrSnap(vmID, snapCommitName string) error {
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc69.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	err = orch.client.Push(orch.ctx, fmt.Sprintf("pc74.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		img.Target(), containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {
 		return fmt.Errorf("pushing container snapshot patch: %w", err)
@@ -282,7 +302,7 @@ func (orch *Orchestrator) pullCtrSnapCommit(snapCommitName string) (*containerd.
 		Hosts: config.ConfigureHosts(orch.ctx, config.HostOptions{DefaultScheme: "http"}),
 		Client: http.DefaultClient,
 	}
-	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc69.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
+	img, err := orch.client.Pull(orch.ctx, fmt.Sprintf("pc74.cloudlab.umass.edu:5000/%s:latest", snapCommitName),
 		containerd.WithPullUnpack, containerd.WithPullSnapshotter(snapshotter),
 		containerd.WithResolver(docker.NewResolver(options)))
 	if err != nil {
@@ -313,21 +333,6 @@ func (orch *Orchestrator) createSnapshot(vmID, revision string) error {
 	if _, err := orch.fcClient.CreateSnapshot(orch.ctx, createSnapshotRequest); err != nil {
 		return fmt.Errorf("creating VM snapshot: %w", err)
 	}
-
-	//log.Println("Flushing container snapshot device")
-	//if err := flushSnapDev(vmInfo.containerSnapMount); err != nil {
-	//	return fmt.Errorf("flushing container snapshot device: %w", err)
-	//}
-	//
-	//log.Println("Suspending container snapshot device")
-	//if err := suspendSnapDev(vmInfo.containerSnapMount); err != nil {
-	//	return fmt.Errorf("suspending container snapshot device: %w", err)
-	//}
-	//
-	//log.Println("Resuming container snapshot device")
-	//if err := resumeSnapDev(vmInfo.containerSnapMount); err != nil {
-	//	return fmt.Errorf("resuming container snapshot device: %w", err)
-	//}
 
 	log.Println("Committing container snapshot")
 	err = orch.commitCtrSnap(vmID, snap.GetCtrSnapCommitName())

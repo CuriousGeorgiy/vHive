@@ -31,6 +31,8 @@ CONFIGS=$ROOT/configs/firecracker-containerd
 
 sudo mkdir -p /etc/firecracker-containerd
 sudo mkdir -p /var/lib/firecracker-containerd/runtime
+sudo mkdir -p /etc/demux-snapshotter
+sudo mkdir -p /var/lib/demux-snapshotter
 sudo mkdir -p /etc/containerd/
 
 cd $ROOT

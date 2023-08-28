@@ -13,10 +13,18 @@ import (
 const (
 	containerdAddress      = "/run/firecracker-containerd/containerd.sock"
 	containerdTTRPCAddress = containerdAddress + ".ttrpc"
-	namespaceName          = "vanilla-firecracker-snapshots"
 	macAddress             = "AA:FC:00:00:00:01"
 	hostDevName            = "tap0"
-	snapshotter            = "devmapper"
+	snapshotter            = "proxy"
+	dockerMetadata = `
+		{
+			"docker-credentials": {
+				"ghcr.io": {
+					"username": "curiousgeorgiy", 
+					"password": ""
+				}
+			}
+		}`
 )
 
 func main() {
@@ -54,7 +62,7 @@ func main() {
 
 func taskWorkflow(vmID, image, revision, snapsBasePath string, keepAlive int, makeSnap, bootFromSnap bool) (err error) {
 	log.Println("Creating orchestrator")
-	orch, err := NewOrchestrator(snapshotter, namespaceName, snapsBasePath)
+	orch, err := NewOrchestrator(snapshotter, vmID, snapsBasePath)
 	if err != nil {
 		return fmt.Errorf("creating orchestrator: %w", err)
 	}
@@ -101,16 +109,16 @@ func taskWorkflow(vmID, image, revision, snapsBasePath string, keepAlive int, ma
 }
 
 func bootstrapVM(orch *Orchestrator, vmID, imageName string) error {
+	log.Println("Creating VM")
+	err := orch.createVM(vmID)
+	if err != nil {
+		return fmt.Errorf("creating VM: %w", err)
+	}
+
 	log.Println("Retrieving container image")
 	image, err := orch.getContainerImage(imageName)
 	if err != nil {
 		return fmt.Errorf("getting container image: %w", err)
-	}
-
-	log.Println("Creating VM")
-	err = orch.createVM(vmID)
-	if err != nil {
-		return fmt.Errorf("creating VM: %w", err)
 	}
 
 	log.Println("Starting container")
