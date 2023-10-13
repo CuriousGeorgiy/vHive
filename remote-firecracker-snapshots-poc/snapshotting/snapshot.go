@@ -1,7 +1,6 @@
 package snapshotting
 
 import (
-	"fmt"
 	"path/filepath"
 )
 
@@ -28,8 +27,8 @@ func (snp *Snapshot) GetMemFilePath() string {
 	return filepath.Join(snp.baseFolder, "memfile")
 }
 
-func (snp *Snapshot) GetCtrSnapCommitName() string {
-	return fmt.Sprintf("revision-%s-commit", snp.id)
+func (snp *Snapshot) GetPatchFilePath() string {
+	return filepath.Join(snp.baseFolder, "patchfile")
 }
 
 func (snp *Snapshot) GetInfoFilePath() string {
