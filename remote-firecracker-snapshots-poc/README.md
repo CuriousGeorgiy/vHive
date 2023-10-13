@@ -14,19 +14,24 @@ sudo /usr/local/bin/firecracker-containerd --config /etc/firecracker-containerd/
 ```
 go build
 ```
-- Create a snapshot
+- Create a VM.
 ```
-# sudo ./remote-firecracker-snapshots-poc -make-snap -id "<VM ID>" -image "<URI>" -revision "<revision ID>" -snapshots-base-path "<path/to/snapshots/folder>"
-sudo ./remote-firecracker-snapshots-poc -make-snap -id "0>" -image "docker.io/library/nginx:1.17-alpine" -revision "nginx-0" -snapshots-base-path "./remote-firecracker-snapshots-poc/snaps"
-"docker.io/curiousgeorgiy/golang-hello-world:latest"
-```
-- Boot from snapshot
-```
-# sudo ./remote-firecracker-snapshots-poc -boot-from-snap -id "<VM ID>" -revision "<revision ID>" -snapshots-base-path "<path/to/snapshots/folder>"
-sudo ./remote-firecracker-snapshots-poc -boot-from-snap -id "0" -revision "nginx-0" -snapshots-base-path "./remote-firecracker-snapshots-poc/snaps"
+# sudo ./remote-firecracker-snapshots-poc -id "<VM ID>" -image "<URI>" -revision "<revision ID>" -snapshots-base-path "<absolute/path/to/snapshots/folder>"
+sudo ./remote-firecracker-snapshots-poc -id "0" -image "docker.io/library/nginx:1.17-alpine" -revision "nginx-0" -snapshots-base-path "/users/glebedev/vhive/remote-firecracker-snapshots-poc/snaps"
 ```
 
-Now, the uVM is started and this is confirmed by the logs of firecracker-containerd, which also gives the IP address of the uVM.
+- Create a VM and make a snapshot from it.
+```
+# sudo ./remote-firecracker-snapshots-poc -make-snap -id "<VM ID>" -image "<URI>" -revision "<revision ID>" -snapshots-base-path "<absolute/path/to/snapshots/folder>"
+sudo ./remote-firecracker-snapshots-poc -make-snap -id "0" -image "docker.io/library/nginx:1.17-alpine" -revision "nginx-0" -snapshots-base-path "/users/glebedev/vhive/remote-firecracker-snapshots-poc/snaps"
+```
+- Boot from the previously made snapshot.
+```
+# sudo ./remote-firecracker-snapshots-poc -boot-from-snap -id "<VM ID>" -revision "<revision ID>" -snapshots-base-path "<absolute/path/to/snapshots/folder>"
+sudo ./remote-firecracker-snapshots-poc -boot-from-snap -id "0" -revision "nginx-0" -snapshots-base-path "/users/glebedev/vhive/remote-firecracker-snapshots-poc/snaps"
+```
+
+Now, the VM is started and this is confirmed by the logs of firecracker-containerd, which also gives the IP address of the VM.
 
 - Send a request
 ```
