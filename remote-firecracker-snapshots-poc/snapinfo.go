@@ -6,15 +6,11 @@ import (
 	"os"
 )
 
-type Snapshot struct {
-	Img               string
-	CtrSnapCommitName string
-	MemSizeMib        uint32
-	VCPUCount    uint32
-	TotalSizeMiB int64
+type snapshot struct {
+	Img string
 }
 
-func serializeSnapInfo(storePath string, snapInfo Snapshot) error {
+func serializeSnapInfo(storePath string, snapInfo snapshot) error {
 	file, err := os.Create(storePath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create snapinfo file")
@@ -30,7 +26,7 @@ func serializeSnapInfo(storePath string, snapInfo Snapshot) error {
 	return nil
 }
 
-func deserializeSnapInfo(storePath string) (*Snapshot, error) {
+func deserializeSnapInfo(storePath string) (*snapshot, error) {
 	file, err := os.Open(storePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open snapinfo file")
@@ -39,7 +35,7 @@ func deserializeSnapInfo(storePath string) (*Snapshot, error) {
 
 	encoder := gob.NewDecoder(file)
 
-	snapInfo := new(Snapshot)
+	snapInfo := new(snapshot)
 
 	err = encoder.Decode(snapInfo)
 	if err != nil {

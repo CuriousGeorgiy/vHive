@@ -55,6 +55,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/google/nftables v0.0.0-20210916140115-16a134723a96
 	github.com/montanaflynn/stats v0.7.1
+	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
@@ -98,7 +99,6 @@ require (
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/sys/mountinfo v0.4.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc93 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d // indirect
 	github.com/opencontainers/selinux v1.8.0 // indirect

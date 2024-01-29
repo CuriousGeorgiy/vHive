@@ -17,6 +17,7 @@ const (
 	macAddress             = "AA:FC:00:00:00:01"
 	hostDevName            = "tap0"
 	snapshotter            = "devmapper"
+	poolName               = "fc-dev-thinpool"
 )
 
 func main() {
@@ -102,7 +103,7 @@ func taskWorkflow(vmID, image, revision, snapsBasePath string, keepAlive int, ma
 
 func bootstrapVM(orch *Orchestrator, vmID, imageName string) error {
 	log.Println("Retrieving container image")
-	image, err := orch.getContainerImage(imageName)
+	img, err := orch.getContainerImage(imageName)
 	if err != nil {
 		return fmt.Errorf("getting container image: %w", err)
 	}
@@ -114,7 +115,7 @@ func bootstrapVM(orch *Orchestrator, vmID, imageName string) error {
 	}
 
 	log.Println("Starting container")
-	err = orch.startContainer(vmID, getSnapKey(vmID), imageName, image)
+	err = orch.startContainer(vmID, getSnapKey(vmID), imageName, img)
 	if err != nil {
 		return fmt.Errorf("starting container: %w", err)
 	}

@@ -12,7 +12,6 @@ replace github.com/firecracker-microvm/firecracker-containerd => github.com/curi
 
 require (
 	github.com/containerd/containerd v1.6.20
-	github.com/containerd/nerdctl v0.18.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/firecracker-microvm/firecracker-containerd v0.0.0-20230718221715-2a60b1c50228
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
